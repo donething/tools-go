@@ -1,4 +1,4 @@
-// 转换文本、文件的编码
+// Package textcoding 转换文本、文件的编码
 package textcoding
 
 import (
@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 )
 
-// 转换文本的编码为 UTF-8
+// TransformText 转换文本的编码为 UTF-8
 // 只转换能匹配到的编码类型：GB-18030、GBK、GB-2312
 func TransformText(bs []byte) ([]byte, error) {
 	// 检测文本的编码
@@ -37,7 +37,7 @@ func TransformText(bs []byte) ([]byte, error) {
 	return ioutil.ReadAll(reader)
 }
 
-// 转换文本文件的编码为 UTF-8
+// TransformFile 转换文本文件的编码为 UTF-8
 // 只转换能匹配到的编码类型，参看 TransformText()
 func TransformFile(path string) error {
 	bs, err := ioutil.ReadFile(path)
