@@ -7,7 +7,11 @@ import (
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
+	"io/fs"
 	"io/ioutil"
+	"log"
+	"path/filepath"
+	"strings"
 )
 
 // TransformText 转换文本的编码为 UTF-8
@@ -49,4 +53,32 @@ func TransformFile(path string) error {
 		return err
 	}
 	return ioutil.WriteFile(path, data, 0644)
+}
+
+// TransformDir 转换目录下的文件的编码为 UTF-8
+// dirPath: 目录路径
+// suffix: 需转编码的文件格式如("txt")
+func TransformDir(dirPath string, suffix string) error {
+	err := filepath.Walk(dirPath, func(path string, info fs.FileInfo, err error) error {
+		// 读取文件出错
+		if err != nil {
+			return err
+		}
+		// 跳过目录
+		if info.IsDir() {
+			return nil
+		}
+		// 跳过非指定格式的文件
+		// filepath.Ext()返回格式包含点号'.'
+		if filepath.Ext(path) != "."+strings.Trim(suffix, ".") {
+			return nil
+		}
+
+		// 转换文件
+		log.Printf("转换文件：%s\n", path)
+		err = TransformFile(path)
+
+		return err
+	})
+	return err
 }
