@@ -9,7 +9,7 @@ import (
 func main() {
 	// 输入的参数
 	var args string
-	fmt.Printf("参数说明：\n1. t[ransform] [suffix] [dir]: 转换目录下指定文本的编码为 UTF-8\n" +
+	fmt.Printf("参数说明：\n1. t[ransform] [suffix] [dir]: 转换目录下指定格式的文本编码为 UTF-8\n" +
 		"2. r[ename] [dir]: 重命名目录下的[特俗]文件\n" +
 		"备注：参数 dir 可空，此时为当前目录")
 	_, err := fmt.Scanf("%s\n", &args)
