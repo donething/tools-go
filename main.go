@@ -1,39 +1,62 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"strings"
+	"os"
 	"tools-go/textcoding"
 )
 
+var (
+	// 操作
+	t bool // 转换指定目录下指定格式的文件编码
+
+	// 参数
+	f string // 格式
+	p string // 路径
+	h bool   // 帮助
+)
+
+func init() {
+	// 操作
+	flag.BoolVar(&t, "t", false, "转换指定目录下指定格式的文件编码为 UTF-8，"+
+		"如'-t -f .txt -p /to/the/path'")
+
+	// 参数
+	flag.StringVar(&f, "f", "", "文件格式，如'.txt'")
+	flag.StringVar(&p, "p", ".", "路径")
+	flag.BoolVar(&h, "h", false, "帮助")
+
+	flag.Usage = usage
+}
+
 func main() {
-	// 输入的参数
-	var args string
-	fmt.Printf("参数说明：\n1. t[ransform] [suffix] [dir]: 转换目录下指定格式的文本编码为 UTF-8\n" +
-		"2. r[ename] [dir]: 重命名目录下的[特俗]文件\n" +
-		"备注：参数 dir 可空，此时为当前目录")
-	_, err := fmt.Scanf("%s\n", &args)
-	if err != nil {
-		fmt.Printf("输入错误：%s\n", err)
-		return
+	flag.Parse()
+
+	var err error
+	if h {
+		flag.PrintDefaults()
+	} else if t {
+		fmt.Printf("开始执行转换文本编码。格式：'%s'，路径：'%s'\n", f, p)
+		err = textcoding.TransformDir(p, f)
+	} else {
+		usage()
 	}
-	// 根据输入的参数执行操作
-	choice := strings.Split(args, " ")
-	switch choice[0] {
-	case "t", "transform":
-		// 输入的参数：后缀、目录
-		suffix := ""
-		dir := "."
-		if len(choice) == 3 {
-			suffix = choice[2]
-		}
-		if len(choice) == 4 {
-			dir = choice[3]
-		}
-		err = textcoding.TransformDir(dir, suffix)
-	}
+
 	// 处理可能的错误
 	if err != nil {
-		fmt.Printf("执行出错：%s\n", err)
+		fmt.Printf("执行程序出错：%s\n", err)
+	}
+}
+
+func usage() {
+	_, err := fmt.Fprintf(os.Stderr, `Usage: tools-go [-t] [-f format] [-p path]
+Options:
+`)
+	flag.PrintDefaults()
+
+	if err != nil {
+		fmt.Printf("显示帮助说明出错：%s\n", err)
+		os.Exit(0)
 	}
 }

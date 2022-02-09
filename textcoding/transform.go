@@ -3,16 +3,17 @@ package textcoding
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 	"io/fs"
 	"io/ioutil"
-	"log"
 	"path/filepath"
-	"strings"
 )
+
+var errFormat = fmt.Errorf("还未适配的编码")
 
 // TransformText 转换文本的编码为 UTF-8
 // 只转换能匹配到的编码类型：GB-18030、GBK、GB-2312
@@ -33,7 +34,7 @@ func TransformText(bs []byte) ([]byte, error) {
 	case "GB-2312":
 		decoder = simplifiedchinese.HZGB2312.NewDecoder()
 	default:
-		return nil, fmt.Errorf("还未适配的编码：%s", result.Charset)
+		return nil, fmt.Errorf("%w : '%s'", errFormat, result.Charset)
 	}
 	// 转换
 	reader := transform.NewReader(bytes.NewReader(bs), decoder)
@@ -56,9 +57,11 @@ func TransformFile(path string) error {
 }
 
 // TransformDir 转换目录下的文件的编码为 UTF-8
+//
 // dirPath: 目录路径
-// suffix: 需转编码的文件格式如("txt")
-func TransformDir(dirPath string, suffix string) error {
+//
+// format: 需转编码的文件格式如(".txt")
+func TransformDir(dirPath string, format string) error {
 	err := filepath.Walk(dirPath, func(path string, info fs.FileInfo, err error) error {
 		// 读取文件出错
 		if err != nil {
@@ -70,15 +73,23 @@ func TransformDir(dirPath string, suffix string) error {
 		}
 		// 跳过非指定格式的文件
 		// filepath.Ext()返回格式包含点号'.'
-		if filepath.Ext(path) != "."+strings.Trim(suffix, ".") {
+		if filepath.Ext(path) != format {
 			return nil
 		}
 
 		// 转换文件
-		log.Printf("转换文件：%s\n", path)
 		err = TransformFile(path)
 
-		return err
+		if errors.Is(err, errFormat) {
+			fmt.Printf("跳过转换文件'%s'\n", path)
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("已转换文件'%s'\n", path)
+		return nil
 	})
 	return err
 }
