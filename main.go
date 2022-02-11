@@ -47,6 +47,7 @@ func main() {
 	if err != nil {
 		fmt.Printf("执行程序出错：%s\n", err)
 	}
+	fmt.Printf("已执行完操作\n")
 }
 
 func usage() {
