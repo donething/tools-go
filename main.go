@@ -63,7 +63,7 @@ func main() {
 		color.Error.Tips("执行程序出错：%s\n", err)
 	}
 
-	color.Notice.Tips("%s\n", result)
+	color.BgGreen.Printf("%s\n", result)
 }
 
 func usage() {
