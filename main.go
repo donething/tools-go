@@ -5,17 +5,20 @@ import (
 	"fmt"
 	"github.com/gookit/color"
 	"os"
+	"tools-go/film"
 	"tools-go/textcoding"
 )
 
 var (
 	// 操作
+	h bool // 帮助
+	s bool // 下载字幕
 	t bool // 转换指定目录下指定格式的文件编码
 
 	// 参数
-	f string // 格式
-	p string // 路径
-	h bool   // 帮助
+	a string // 地址/路径
+	f string // 文件的格式
+	k string // 关键字
 )
 var (
 	// 字幕格式映射，用于快速指定格式
@@ -24,14 +27,17 @@ var (
 
 func init() {
 	// 操作
+	flag.BoolVar(&h, "h", false, "帮助")
 	flag.BoolVar(&t, "t", false, "转换指定目录下指定格式的文件编码为 UTF-8，"+
-		"如'-t -f .txt -p /to/the/path'")
+		"如'-t -f .txt -a /to/the/path'")
+	flag.BoolVar(&s, "s", false, "下载电影的字幕字幕，"+
+		"如'-s -k 电影名 [-a /path/the/film]'。如果指定电影路径，则自动重命名字幕文件并保存到相同路径")
 
 	// 参数
+	flag.StringVar(&a, "a", "", "地址/路径")
 	flag.StringVar(&f, "f", "",
 		"文件格式，可以用逗号分隔多个格式，如'txt,cue,srt'。可通过数字快速指定文件类型，1：字幕格式")
-	flag.StringVar(&p, "p", ".", "路径")
-	flag.BoolVar(&h, "h", false, "帮助")
+	flag.StringVar(&k, "k", "", "关键字")
 
 	flag.Usage = usage
 }
@@ -45,29 +51,22 @@ func main() {
 		format = f
 	}
 
-	// 执行结果
-	var result string
-	var err error
 	// 根据参数指定操作
 	if h {
 		flag.PrintDefaults()
 	} else if t {
-		color.Notice.Tips("开始执行转换文本编码。格式：'%s'，路径：'%s'\n", format, p)
-		result, err = textcoding.TransformDir(p, format)
+		color.Notice.Tips("开始执行转换文本编码。格式：'%s'，路径：'%s'\n", format, a)
+		textcoding.TransformDir(a, format)
+	} else if s {
+		color.Notice.Tips("开始尝试下载'%s'的字幕\n", k)
+		film.DLSubtitle(k, a)
 	} else {
 		usage()
 	}
-
-	// 处理可能的错误
-	if err != nil {
-		color.Error.Tips("执行程序出错：%s\n", err)
-	}
-
-	color.BgGreen.Printf("%s\n", result)
 }
 
 func usage() {
-	_, err := fmt.Fprintf(os.Stderr, `Usage: tools-go [-t] [-f format] [-p path]
+	_, err := fmt.Fprintf(os.Stderr, `Usage: tools-go [-t] [-f format] [-a addr/path]
 Options:
 `)
 	flag.PrintDefaults()
