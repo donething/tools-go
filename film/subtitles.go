@@ -123,5 +123,5 @@ func DLSubtitle(key string, filmPath string) {
 		return
 	}
 
-	color.Primary.Tips("已将字幕'%s'保存到本地'%s'\n", data.Name, path)
+	color.Success.Tips("已完成 将字幕'%s'保存到本地'%s'\n", data.Name, path)
 }

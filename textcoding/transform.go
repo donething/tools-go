@@ -47,7 +47,7 @@ func TransformDir(dirPath string, format string) {
 
 		if errors.Is(err, errUnknownCoding) {
 			skip++
-			color.Info.Tips("还未适配的编码'%s'：文件：'%s'\n", encoding, path)
+			color.Warn.Tips("还未适配的编码'%s'：文件：'%s'\n", encoding, path)
 			return nil
 		}
 
@@ -58,7 +58,7 @@ func TransformDir(dirPath string, format string) {
 
 		if has {
 			done++
-			color.Success.Tips("已转换编码'%s'，文件：'%s'\n", encoding, path)
+			color.Notice.Tips("已转换编码'%s'，文件：'%s'\n", encoding, path)
 		} else {
 			skip++
 			color.Debug.Tips("无需转换该编码'%s'，文件：'%s'\n", encoding, path)
@@ -72,5 +72,5 @@ func TransformDir(dirPath string, format string) {
 		return
 	}
 
-	color.Primary.Tips("已完成转换编码：转换 %d 个，跳过 %d 个，失败 %d 个\n", done, skip, fail)
+	color.Success.Tips("已完成 转换编码：转换 %d 个，跳过 %d 个，失败 %d 个\n", done, skip, fail)
 }

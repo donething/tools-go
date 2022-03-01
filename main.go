@@ -5,18 +5,21 @@ import (
 	"fmt"
 	"github.com/gookit/color"
 	"os"
+	"tools-go/downloads"
 	"tools-go/film"
 	"tools-go/textcoding"
 )
 
 var (
 	// 操作
+	d bool // 下载 JSON 格式的图集
 	h bool // 帮助
 	s bool // 下载字幕
 	t bool // 转换指定目录下指定格式的文件编码
 
 	// 参数
 	a string // 地址/路径
+	D string // 目标路径
 	f string // 文件的格式
 	k string // 关键字
 )
@@ -25,8 +28,15 @@ var (
 	fortmatMap = map[string]string{"1": "srt,ass,ssa"}
 )
 
+// color Tips 使用说明
+// color.Notice 完成整个步骤的一小步骤。如 下载了某项、提示输入
+// color.Success 完成整个步骤。如 整个任务下载完成
+// color.Info 普通提醒。如 提示正在进行的操作
+// color.Warn 轻微注意。如 没有该文件
+
 func init() {
 	// 操作
+	flag.BoolVar(&d, "d", false, "下载 JSON 图集，如'-d -D /save/dir -a /json/path'")
 	flag.BoolVar(&h, "h", false, "帮助")
 	flag.BoolVar(&t, "t", false, "转换指定目录下指定格式的文件编码为 UTF-8，"+
 		"如'-t -f .txt -a /to/the/path'")
@@ -35,6 +45,7 @@ func init() {
 
 	// 参数
 	flag.StringVar(&a, "a", "", "地址/路径")
+	flag.StringVar(&D, "D", "", "目标路径")
 	flag.StringVar(&f, "f", "",
 		"文件格式，可以用逗号分隔多个格式，如'txt,cue,srt'。可通过数字快速指定文件类型，1：字幕格式")
 	flag.StringVar(&k, "k", "", "关键字")
@@ -54,11 +65,14 @@ func main() {
 	// 根据参数指定操作
 	if h {
 		flag.PrintDefaults()
+	} else if d {
+		color.Info.Tips("开始下载 JSON 格式的图集'%s'，保存到'%s'\n", a, D)
+		downloads.DLImgs(D, a)
 	} else if t {
-		color.Notice.Tips("开始执行转换文本编码。格式：'%s'，路径：'%s'\n", format, a)
+		color.Info.Tips("开始执行转换文本编码。格式：'%s'，路径：'%s'\n", format, a)
 		textcoding.TransformDir(a, format)
 	} else if s {
-		color.Notice.Tips("开始尝试下载'%s'的字幕\n", k)
+		color.Info.Tips("开始尝试下载'%s'的字幕\n", k)
 		film.DLSubtitle(k, a)
 	} else {
 		usage()
