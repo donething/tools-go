@@ -75,23 +75,26 @@ func DLSubtitle(key string, filmPath string) {
 		return
 	}
 
-	// 目标字幕
+	// 列出结果
+	color.Notice.Tips("查找到的字幕文件(%d个)", len(subResp.Data))
+	fmt.Printf("%-2s\t%-5s\t\t%s\n", "编号", "语言", "字幕名")
+	for i, item := range subResp.Data {
+		// -：表示左对齐，0.5：表示占用 0 到 5 个字符宽度
+		// 注：一个字母和一个汉字都算一个字符
+		fmt.Printf("%4d\t%-0.5v\t\t%-30s\n", i+1, item.Languages, item.Name)
+	}
+
+	// 暂存待下载的目标字幕
 	var data = &subResp.Data[0]
-
 	if len(subResp.Data) >= 2 {
-		color.Notice.Tips("查找到多个字幕文件")
-		for i, item := range subResp.Data {
-			fmt.Printf("%2d. %s  %d  %v  %s\n", i, item.Name, item.Duration, item.Languages, item.Cid)
-		}
-
 		var choice int
-		fmt.Printf("\n请输入字幕编号，下载指定字幕：")
+		fmt.Printf("\n请输入字幕编号，来下载指定字幕：")
 		_, err = fmt.Scanln(&choice)
 		if err != nil {
 			color.Error.Tips("输入字幕编号时出错：%s\n", err)
 			return
 		}
-		data = &subResp.Data[choice]
+		data = &subResp.Data[choice-1]
 	}
 
 	// 如果没有指定电影路径，则将字幕保存到当前执行路径下；否则将字幕重命名为电影名，并保存到电影所在目录下
@@ -100,7 +103,7 @@ func DLSubtitle(key string, filmPath string) {
 		path = filmPath[0:strings.LastIndex(filmPath, ".")] + filepath.Ext(data.Name)
 	}
 
-	color.Debug.Tips("开始下载字幕文件：'%s'  %d毫秒  %v\n", data.Name, data.Duration, data.Languages)
+	color.Info.Tips("开始下载字幕文件'%s'，语言 %v\n", data.Name, data.Languages)
 
 	// 下载字幕
 	subBS, err := httpclient.Get(data.URL, headers)
@@ -113,6 +116,12 @@ func DLSubtitle(key string, filmPath string) {
 	subBS, encoding, err := dotext.Text2UTF8(subBS)
 	if err != nil {
 		color.Error.Tips("转换字幕编码'%s'到 UTF-8 出错：%s\n", encoding, err)
+		return
+	}
+
+	// 因为服务器的字幕也是从别处获取，可能将"404 Not Found"页面也作为字幕保存。此处排除此种情况
+	if strings.Index(string(subBS), "404 Not Found") != -1 {
+		color.Warn.Tips("经验证，该项为'404 Not Found'的页面内容，不是真是字幕，取消下载")
 		return
 	}
 
