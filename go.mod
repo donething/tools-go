@@ -3,7 +3,7 @@ module tools-go
 go 1.17
 
 require (
-	github.com/donething/utils-go v0.0.12
+	github.com/donething/utils-go v0.0.21
 	github.com/gookit/color v1.5.0
 )
 
