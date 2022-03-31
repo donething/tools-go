@@ -18,7 +18,7 @@ var (
 	T bool // 转换指定目录下指定格式的文件编码
 
 	// 参数
-	a string // 地址/路径
+	i string // 数据来源(地址、路径)
 	d string // 目标路径
 	f string // 文件的格式
 	k string // 关键字
@@ -38,14 +38,16 @@ func init() {
 	// 操作
 	flag.BoolVar(&H, "H", false, "帮助")
 	flag.BoolVar(&D, "D", false, "下载 JSON 图集，"+
-		"如'-D -d /save/dir -a /json/path'")
+		"如'-D -d /save/dir -i /json/path'")
 	flag.BoolVar(&T, "T", false, "转换指定目录下指定格式的文件编码为 UTF-8，"+
-		"如'-T -f txt -a /to/the/path'")
-	flag.BoolVar(&S, "S", false, "下载电影的字幕字幕，"+
-		"如'-S -k 电影名 [-a /path/the/film]'。如果指定电影路径，则自动重命名字幕文件并保存到相同路径")
+		"如'-T -f txt -i /path'")
+	flag.BoolVar(&S, "S", false, "下载电影的字幕，"+
+		"如'-S [-k 电影名] [-i /film/path]'。如果仅指定 -k，则下载字幕到当前所在路径；"+
+		"如果还指定 -i，则自动重命名字幕、再保存到相同目录；"+
+		"如果仅指定 -i，则将自动从电影路径中提取关键字来搜索")
 
 	// 参数
-	flag.StringVar(&a, "a", "", "源地址/路径")
+	flag.StringVar(&i, "i", "", "数据来源(地址、路径)")
 	flag.StringVar(&d, "d", "", "目标路径")
 	flag.StringVar(&f, "f", "", "文件格式，可以用逗号分隔多个格式。"+
 		"如'txt,cue,srt'。还可通过数字快速指定某类文件，1：字幕文件格式")
@@ -67,21 +69,21 @@ func main() {
 	if H {
 		flag.PrintDefaults()
 	} else if D {
-		color.Info.Tips("开始下载 JSON 格式的图集'%s'，保存到'%s'\n", a, d)
-		downloads.DLImgs(d, a)
+		color.Info.Tips("开始下载 JSON 格式的图集'%s'，保存到'%s'\n", i, d)
+		downloads.DLImgs(d, i)
 	} else if T {
-		color.Info.Tips("开始执行转换文本编码。格式：'%s'，路径：'%s'\n", format, a)
-		textcoding.TransformDir(a, format)
+		color.Info.Tips("开始执行转换文本编码。格式：'%s'，路径：'%s'\n", format, i)
+		textcoding.TransformDir(i, format)
 	} else if S {
 		color.Info.Tips("开始尝试下载'%s'的字幕\n", k)
-		film.DLSubtitle(k, a)
+		film.DLSubtitle(k, i)
 	} else {
 		usage()
 	}
 }
 
 func usage() {
-	_, err := fmt.Fprintf(os.Stderr, `Usage: tools-go [-T] [-f format] [-a addr/path]
+	_, err := fmt.Fprintf(os.Stderr, `Usage: tools-go [-DHST] [-f format] [-i addr/path]
 Options:
 `)
 	flag.PrintDefaults()

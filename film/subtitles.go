@@ -46,11 +46,22 @@ var (
 
 // DLSubtitle 下载字幕
 func DLSubtitle(key string, filmPath string) {
+	// 如果关键字 key 为空，将提取关键字来搜索
+	if key == "" {
+		key = dotext.ResolveFanhao(filmPath)
+		color.Info.Tips("提取到的字幕关键字：'%s'，准备搜索\n", key)
+	}
+	// 没有匹配到搜索关键字，返回
+	if key == "" {
+		color.Error.Tips("下载字幕失败：没有匹配到搜索关键字'%s'\n", filmPath)
+		return
+	}
+
 	// 发送请求
 	u := fmt.Sprintf(subURL, url.QueryEscape(key))
 	bs, err := httpclient.Get(u, headers)
 	if err != nil {
-		color.Error.Tips("下载电影'%s'的字幕出错：%s\n", key, err)
+		color.Error.Tips("下载字幕失败。网络出错：%s\n", err)
 		return
 	}
 
@@ -58,20 +69,13 @@ func DLSubtitle(key string, filmPath string) {
 	var subResp SubResp
 	err = json.Unmarshal(bs, &subResp)
 	if err != nil {
-		color.Error.Tips("解析字幕列表的响应出错：'%s'。URL('%s')：'%s'\n", err, u, string(bs))
-		return
-	}
-
-	// 获取当前执行路径，将保存字幕文件到该路径下
-	curPath, err := os.Getwd()
-	if err != nil {
-		color.Error.Tips("获取当前执行路径出错：%s\n", err)
+		color.Error.Tips("下载字幕失败。解析字幕列表出错：'%s'。URL('%s')：'%s'\n", err, u, string(bs))
 		return
 	}
 
 	// 提取下载地址
 	if len(subResp.Data) == 0 {
-		color.Warn.Tips("没有找到电影'%s'的字幕\n", key)
+		color.Warn.Tips("下载字幕失败。没有找到电影'%s'的字幕\n", key)
 		return
 	}
 
@@ -98,9 +102,17 @@ func DLSubtitle(key string, filmPath string) {
 	}
 
 	// 如果没有指定电影路径，则将字幕保存到当前执行路径下；否则将字幕重命名为电影名，并保存到电影所在目录下
-	path := filepath.Join(curPath, data.Name)
+	savePath := ""
 	if filmPath != "" {
-		path = filmPath[0:strings.LastIndex(filmPath, ".")] + filepath.Ext(data.Name)
+		savePath = filmPath[0:strings.LastIndex(filmPath, ".")] + filepath.Ext(data.Name)
+	} else {
+		// 获取当前执行路径，将保存字幕文件到该路径下
+		curPath, err := os.Getwd()
+		if err != nil {
+			color.Error.Tips("下载字幕失败。获取当前执行路径出错：%s\n", err)
+			return
+		}
+		savePath = filepath.Join(curPath, data.Name)
 	}
 
 	color.Info.Tips("开始下载字幕文件'%s'，语言 %v\n", data.Name, data.Languages)
@@ -115,22 +127,22 @@ func DLSubtitle(key string, filmPath string) {
 	// 将字幕文件编码转为 UTF-8
 	subBS, encoding, err := dotext.Text2UTF8(subBS)
 	if err != nil {
-		color.Error.Tips("转换字幕编码'%s'到 UTF-8 出错：%s\n", encoding, err)
+		color.Error.Tips("下载字幕失败。转换字幕编码'%s'到'UTF-8'出错：%s\n", encoding, err)
 		return
 	}
 
 	// 因为服务器的字幕也是从别处获取，可能将"404 Not Found"页面也作为字幕保存。此处排除此种情况
 	if strings.Index(string(subBS), "404 Not Found") != -1 {
-		color.Warn.Tips("经验证，该项为'404 Not Found'的页面内容，不是真是字幕，取消下载")
+		color.Warn.Tips("下载字幕失败。经验证，该项为'404 Not Found'的页面内容，不是真实字幕，取消下载")
 		return
 	}
 
 	// 保存到本地
-	err = ioutil.WriteFile(path, subBS, 0644)
+	err = ioutil.WriteFile(savePath, subBS, 0644)
 	if err != nil {
-		color.Error.Tips("保存字幕文件'%s'出错：%s\n", path, err)
+		color.Error.Tips("下载字幕失败。保存字幕文件'%s'出错：%s\n", savePath, err)
 		return
 	}
 
-	color.Success.Tips("已完成 将字幕'%s'保存到本地'%s'\n", data.Name, path)
+	color.Success.Tips("已完成 将字幕'%s'保存到本地'%s'\n", data.Name, savePath)
 }
