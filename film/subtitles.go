@@ -116,6 +116,7 @@ func DLSubtitle(key string, filmPath string) {
 	}
 
 	color.Info.Tips("开始下载字幕文件'%s'，语言 %v\n", data.Name, data.Languages)
+	color.Info.Tips("字幕的下载地址 '%s'\n", data.URL)
 
 	// 下载字幕
 	subBS, err := httpclient.Get(data.URL, headers)
@@ -131,9 +132,10 @@ func DLSubtitle(key string, filmPath string) {
 		return
 	}
 
-	// 因为服务器的字幕也是从别处获取，可能将"404 Not Found"页面也作为字幕保存。此处排除此种情况
-	if strings.Index(string(subBS), "404 Not Found") != -1 {
-		color.Warn.Tips("下载字幕失败。经验证，该项为'404 Not Found'的页面内容，不是真实字幕，取消下载")
+	// 判断是否确实为字幕，验证关键字：.srt 需包含"-->"、.ass 需包含"Format"，才为字幕文件
+	if strings.Index(string(subBS), "-->") == -1 ||
+		strings.Index(string(subBS), "Format") == -1 {
+		color.Warn.Tips("下载字幕失败。经验证，该项不是字幕文件，取消下载")
 		return
 	}
 
