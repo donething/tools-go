@@ -133,7 +133,7 @@ func DLSubtitle(key string, filmPath string) {
 	}
 
 	// 判断是否确实为字幕，验证关键字：.srt 需包含"-->"、.ass 需包含"Format"，才为字幕文件
-	if strings.Index(string(subBS), "-->") == -1 ||
+	if strings.Index(string(subBS), "-->") == -1 &&
 		strings.Index(string(subBS), "Format") == -1 {
 		color.Warn.Tips("下载字幕失败。经验证，该项不是字幕文件，取消下载")
 		return
