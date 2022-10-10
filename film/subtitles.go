@@ -6,7 +6,6 @@ import (
 	"github.com/donething/utils-go/dohttp"
 	"github.com/donething/utils-go/dotext"
 	"github.com/gookit/color"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -49,19 +48,27 @@ func DLSubtitle(key string, filmPath string) {
 	// 如果关键字 key 为空，将提取关键字来搜索
 	if key == "" {
 		key = dotext.ResolveFanhao(filmPath)
-		color.Info.Tips("提取到的字幕关键字：'%s'，准备搜索\n", key)
 	}
+	if key == "" {
+		key = filepath.Base(filmPath)
+		if strings.LastIndex(key, ".") >= 0 {
+			key = key[0:strings.LastIndex(key, ".")]
+		}
+	}
+
 	// 没有匹配到搜索关键字，返回
 	if key == "" {
-		color.Error.Tips("下载字幕失败：没有匹配到搜索关键字'%s'\n", filmPath)
+		color.Error.Tips("下载字幕失败：没有匹配到搜索关键字'%s'", filmPath)
 		return
 	}
+
+	color.Info.Tips("提取到的字幕关键字：'%s'，准备搜索", key)
 
 	// 发送请求
 	u := fmt.Sprintf(subURL, url.QueryEscape(key))
 	bs, err := httpclient.Get(u, headers)
 	if err != nil {
-		color.Error.Tips("下载字幕失败。网络出错：%s\n", err)
+		color.Error.Tips("下载字幕失败。网络出错：%s", err)
 		return
 	}
 
@@ -69,13 +76,13 @@ func DLSubtitle(key string, filmPath string) {
 	var subResp SubResp
 	err = json.Unmarshal(bs, &subResp)
 	if err != nil {
-		color.Error.Tips("下载字幕失败。解析字幕列表出错：'%s'。URL('%s')：'%s'\n", err, u, string(bs))
+		color.Error.Tips("下载字幕失败。解析字幕列表出错：'%s'。URL('%s')：'%s'", err, u, string(bs))
 		return
 	}
 
 	// 提取下载地址
 	if len(subResp.Data) == 0 {
-		color.Warn.Tips("下载字幕失败。没有找到电影'%s'的字幕\n", key)
+		color.Warn.Tips("下载字幕失败。没有找到电影'%s'的字幕", key)
 		return
 	}
 
@@ -95,7 +102,7 @@ func DLSubtitle(key string, filmPath string) {
 		fmt.Printf("\n请输入字幕编号，来下载指定字幕：")
 		_, err = fmt.Scanln(&choice)
 		if err != nil {
-			color.Error.Tips("输入字幕编号时出错：%s\n", err)
+			color.Error.Tips("输入字幕编号时出错：%s", err)
 			return
 		}
 		data = &subResp.Data[choice-1]
@@ -107,28 +114,28 @@ func DLSubtitle(key string, filmPath string) {
 		savePath = filmPath[0:strings.LastIndex(filmPath, ".")] + filepath.Ext(data.Name)
 	} else {
 		// 获取当前执行路径，将保存字幕文件到该路径下
-		curPath, err := os.Getwd()
-		if err != nil {
-			color.Error.Tips("下载字幕失败。获取当前执行路径出错：%s\n", err)
+		curPath, errWD := os.Getwd()
+		if errWD != nil {
+			color.Error.Tips("下载字幕失败。获取当前执行路径出错：%s", errWD)
 			return
 		}
 		savePath = filepath.Join(curPath, data.Name)
 	}
 
-	color.Info.Tips("开始下载字幕文件'%s'，语言 %v\n", data.Name, data.Languages)
-	color.Info.Tips("字幕的下载地址 '%s'\n", data.URL)
+	color.Info.Tips("开始下载字幕文件'%s'，语言 %v", data.Name, data.Languages)
+	color.Info.Tips("字幕的下载地址 '%s'", data.URL)
 
 	// 下载字幕
 	subBS, err := httpclient.Get(data.URL, headers)
 	if err != nil {
-		color.Error.Tips("下载字幕文件'%s'出错：%s\n", data.URL, err)
+		color.Error.Tips("下载字幕文件'%s'出错：%s", data.URL, err)
 		return
 	}
 
 	// 将字幕文件编码转为 UTF-8
 	subBS, encoding, err := dotext.Text2UTF8(subBS)
 	if err != nil {
-		color.Error.Tips("下载字幕失败。转换字幕编码'%s'到'UTF-8'出错：%s\n", encoding, err)
+		color.Error.Tips("下载字幕失败。转换字幕编码'%s'到'UTF-8'出错：%s", encoding, err)
 		return
 	}
 
@@ -140,11 +147,11 @@ func DLSubtitle(key string, filmPath string) {
 	}
 
 	// 保存到本地
-	err = ioutil.WriteFile(savePath, subBS, 0644)
+	err = os.WriteFile(savePath, subBS, 0644)
 	if err != nil {
-		color.Error.Tips("下载字幕失败。保存字幕文件'%s'出错：%s\n", savePath, err)
+		color.Error.Tips("下载字幕失败。保存字幕文件'%s'出错：%s", savePath, err)
 		return
 	}
 
-	color.Success.Tips("已完成 将字幕'%s'保存到本地'%s'\n", data.Name, savePath)
+	color.Success.Tips("已完成 将字幕'%s'保存到本地'%s'", data.Name, savePath)
 }

@@ -3,3 +3,4 @@ go.sum
 *.exe
 tools-go
 *.log
+文件列表_*.txt

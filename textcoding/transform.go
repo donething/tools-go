@@ -24,7 +24,7 @@ var (
 //
 // dirPath: 目录路径
 //
-// format: 需转编码的文件格式如，可多个("txt,cue,srt")
+// format: 需转编码的文件格式如，可多个(".txt.cue.srt")
 func TransformDir(dirPath string, format string) {
 	// 遍历目录
 	err := filepath.Walk(dirPath, func(path string, info fs.FileInfo, err error) error {
@@ -38,7 +38,7 @@ func TransformDir(dirPath string, format string) {
 		}
 		// 跳过非指定格式的文件
 		// filepath.Ext()返回格式包含点号'.'
-		if strings.Index(format, strings.TrimLeft(filepath.Ext(path), ".")) == -1 {
+		if !strings.Contains(format, filepath.Ext(path)) {
 			return nil
 		}
 
@@ -47,7 +47,7 @@ func TransformDir(dirPath string, format string) {
 
 		if errors.Is(err, errUnknownCoding) {
 			skip++
-			color.Warn.Tips("还未适配的编码'%s'：文件：'%s'\n", encoding, path)
+			color.Warn.Tips("还未适配的编码'%s'：文件：'%s'", encoding, path)
 			return nil
 		}
 
@@ -58,19 +58,19 @@ func TransformDir(dirPath string, format string) {
 
 		if has {
 			done++
-			color.Notice.Tips("已转换编码'%s'，文件：'%s'\n", encoding, path)
+			color.Notice.Tips("已转换编码'%s'，文件：'%s'", encoding, path)
 		} else {
 			skip++
-			color.Debug.Tips("无需转换该编码'%s'，文件：'%s'\n", encoding, path)
+			color.Debug.Tips("无需转换该编码'%s'，文件：'%s'", encoding, path)
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		color.Error.Tips("遍历路径'%s'出错：%s\n", dirPath, err)
+		color.Error.Tips("遍历路径'%s'出错：%s", dirPath, err)
 		return
 	}
 
-	color.Success.Tips("已完成 转换编码：转换 %d 个，跳过 %d 个，失败 %d 个\n", done, skip, fail)
+	color.Success.Tips("已完成 转换编码：转换 %d 个，跳过 %d 个，失败 %d 个", done, skip, fail)
 }
