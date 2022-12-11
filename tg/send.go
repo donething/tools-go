@@ -97,7 +97,7 @@ func sendImgDir(chatID string, dir string, actorStr string) error {
 				name = name[:i]
 			}
 
-			caption := fmt.Sprintf("%s[%s  Part%d]", actorStr, dirName, part)
+			caption := fmt.Sprintf("%s[%s  Part%d/%d]", actorStr, dirName, part, total)
 			// color.Primary.Tips("设置图集'%s'的标题：'%s'。此时总图片数为：%d\n", dirName, caption, count)
 			photo.Caption = caption
 		}
