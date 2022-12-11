@@ -116,10 +116,12 @@ func sendImgDir(chatID string, dir string, actorStr string) error {
 		}
 	}
 
-	color.Notice.Tips("开始发送图集'%s'的第 %d/%d 部分\n", dirName, part, total)
-	err = execSendMedia(chatID, photos)
-	if err != nil {
-		return err
+	if len(photos) >= 1 {
+		color.Notice.Tips("开始发送图集'%s'的最后一部分 %d/%d\n", dirName, part, total)
+		err = execSendMedia(chatID, photos)
+		if err != nil {
+			return err
+		}
 	}
 
 	color.Success.Tips("已发送图集'%s'，共发送 %d 张图片\n", dirName, count)
