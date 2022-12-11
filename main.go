@@ -5,16 +5,20 @@ import (
 	"fmt"
 	"github.com/gookit/color"
 	"os"
+	"strings"
 	"tools-go/download"
 	"tools-go/file"
 	"tools-go/film"
 	"tools-go/textcoding"
+	"tools-go/tg"
+	"tools-go/tg/tg_iface"
 )
 
 // 大写为操作，小写为参数
 var (
 	D bool // 下载 JSON 格式的图集
 	F bool // 扫描文件
+	G bool // 发送本地文件到 TG
 	H bool // 帮助
 	S bool // 下载字幕
 	T bool // 转换指定目录下指定格式的文件编码
@@ -70,7 +74,14 @@ func init() {
 	flag.BoolVar(&H, "H", false, "帮助")
 	flag.BoolVar(&D, "D", false, "下载 JSON 图集："+"如'-D -d /save/dir -i /json/path'")
 	flag.BoolVar(&F, "F", false, "扫描文件：如'-F -f .mp3.mp4 -k 东风破 -p false'。"+
-		"其中格式f、关键字k的前加'?'符号则为排除，需全路径时可p的值为任意非空值")
+		"-f 文件格式，可多个用'.'分隔；"+
+		"-k 搜索关键字，前加'?'符号则为排除，需返回全路径时可指定`p`的值为任意非空值")
+	flag.BoolVar(&G, "G", false, "发送本地文件到 TG："+
+		"如'-G -k token -f chatid -i sites -d /imgs/dir'。"+
+		"-k 为 TG 的 token；"+
+		"-f 为TG的频道ID；"+
+		"-i 为指定处理函数，暂时可能值为'lj'；"+
+		"-d 为待发送的目录")
 	flag.BoolVar(&T, "T", false, "转换指定目录下的指定格式的文件编码为 UTF-8："+
 		"如'-T -i /path -f .ass.srt'")
 	flag.BoolVar(&S, "S", false, "下载电影的字幕："+
@@ -105,6 +116,26 @@ func main() {
 	} else if F {
 		color.Info.Tips("开始扫描目录'%s'", d)
 		file.Scan(d, format, k, p)
+	} else if G {
+		if strings.TrimSpace(f) == "" || strings.TrimSpace(d) == "" {
+			color.Warn.Tips("无法发送到TG，TG的token或chatid为空\n", i)
+			return
+		}
+
+		var t tg_iface.ITask
+		switch i {
+		case "lj":
+			t = tg_iface.LJTask{Task: tg_iface.Task{
+				ChatID: f,
+				Dir:    d,
+			}}
+		default:
+			color.Warn.Tips("无法发送到TG，未知的处理标识'%s'\n", i)
+			return
+		}
+
+		tg.Init(k)
+		tg.SendDir(t)
 	} else if S {
 		color.Info.Tips("开始尝试下载'%s'的字幕", k)
 		film.DLSubtitle(k, i)

@@ -10,7 +10,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
 
 // SubResp 获取字幕列表的响应
@@ -33,7 +32,7 @@ const (
 )
 
 var (
-	httpclient = dohttp.New(30*time.Second, false, false)
+	httpclient = dohttp.New(false, false)
 	headers    = map[string]string{
 		"Host":   "api-shoulei-ssl.xunlei.com",
 		"Accept": "application/json, text/plain, */*",

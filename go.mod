@@ -1,9 +1,9 @@
 module tools-go
 
-go 1.17
+go 1.19
 
 require (
-	github.com/donething/utils-go v0.0.23
+	github.com/donething/utils-go v0.0.25
 	github.com/gookit/color v1.5.0
 )
 

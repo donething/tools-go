@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-var client = dohttp.New(60, false, false)
+var client = dohttp.New(false, false)
 
 // DLImgs 下载 JSON 格式的图集
 //
