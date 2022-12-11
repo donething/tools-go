@@ -105,7 +105,7 @@ func sendImgDir(chatID string, dir string, actorStr string) error {
 
 		// 图集满photosMax个后需要发送
 		if count%mediaMax == 0 {
-			color.Info.Tips("开始发送图集'%s'的第 %d/%d 部分\n", dirName, part, total)
+			color.Notice.Tips("开始发送图集'%s'的第 %d/%d 部分\n", dirName, part, total)
 			err := execSendMedia(chatID, photos)
 			if err != nil {
 				return err
